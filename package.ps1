@@ -38,6 +38,16 @@ if (-not $Maintainer)
 	}
 }
 
+$Architecture = ( sh -c "dpkg --print-architecture" ).Trim()
+
+$Architecture
+
+$RID = [System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier
+
+$Arch = ($RID.Split('-'))[-1]
+
+$Arch
+
 if (-not ( Test-Path $WorkDir ))
 {
 	sh -c "git clone https://github.com/PowerShell/PowerShell.git $WorkDir --single-branch --branch $ReleaseTag"
@@ -61,7 +71,7 @@ if (-not ( Test-Path $WorkDir ))
 		$xml.Save("$PWD/$ProjectFile")
 		Import-Module ./build.psm1
 		Start-PSBootstrap
-		Start-PSBuild -Configuration Release -Clean -ReleaseTag $ReleaseTag
+		Start-PSBuild -Configuration Release -Clean -ReleaseTag $ReleaseTag -Runtime "linux-$Arch"
 	}
 	finally
 	{
@@ -78,9 +88,6 @@ if (-not (Test-Path $OriginalFile))
 	Invoke-WebRequest -Uri $Uri -OutFile $OriginalFile
 }
 
-$Architecture = ( sh -c "dpkg --print-architecture" ).Trim()
-
-$Architecture
 $Release = '1.ubuntu'
 
 $OutputFile = "powershell_$Version-$Release`_$Architecture.deb"
