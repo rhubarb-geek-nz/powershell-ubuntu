@@ -2,9 +2,8 @@
 # Copyright (c) 2024 Roger Brown.
 # Licensed under the MIT License.
 
-Param($Version = '7.4.5', $Maintainer)
+Param($Version, $Maintainer)
 
-$ReleaseTag = "v$Version"
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $WorkDir = 'github-PowerShell'
 $ProjectName = 'powershell-unix'
@@ -16,6 +15,18 @@ trap
 {
 	throw $PSItem
 }
+
+if ($Version)
+{
+	$ReleaseTag = "v$Version"
+}
+else
+{
+	$ReleaseTag = (Invoke-RestMethod -Uri 'https://api.github.com/repos/PowerShell/PowerShell/releases/latest').tag_name
+	$Version = $ReleaseTag.Substring(1)
+}
+
+$ReleaseTag
 
 if (-not $Maintainer)
 {
@@ -95,6 +106,17 @@ Get-ChildItem $ReleaseDir -Directory -Name 'publish' -Recurse | ForEach-Object {
 	Copy-Item $SrcDir 'data/opt/microsoft/powershell/7' -Recurse
 }
 
+$DotnetRuntime = Get-ChildItem $ReleaseDir -Directory -Name 'publish' -Recurse | ForEach-Object {
+	$_.Split('/') | ForEach-Object {
+		if ($_.StartsWith('net'))
+		{
+			$_.Replace('net','dotnet-runtime-')
+		}
+	}
+}
+
+$DotnetRuntime
+
 sh -e -c "cd data ; ar p ../$OriginalFile data.tar.gz | tar xvfz - ./usr/local/share/man/man1/pwsh.1.gz"
 		
 if ($LastExitCode)
@@ -115,7 +137,7 @@ Vendor: Microsoft Corporation
 Architecture: $Architecture
 Maintainer: $Maintainer
 Installed-Size: $Size
-Depends: dotnet-runtime-8.0
+Depends: $DotnetRuntime
 Section: shells
 Priority: optional
 Homepage: https://microsoft.com/powershell
