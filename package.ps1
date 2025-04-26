@@ -64,7 +64,7 @@ if (-not ( Test-Path $WorkDir ))
 		$null = $pg.AppendChild($sc)
 		$xml.Save("$PWD/$ProjectFile")
 		Import-Module ./build.psm1
-		Start-PSBootstrap
+		Start-PSBootstrap -Scenario DotNet
 
 		foreach ($Arch in 'arm', 'arm64', 'x64')
 		{
